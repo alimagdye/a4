@@ -168,6 +168,22 @@ app.post("/auth/login", async (req, res) => {
   });
 });
 
+app.get("/public/info", (_req, res) => {
+  res.status(200).json({ message: "Welcome stranger! This info is public." });
+});
+
+app.get("/protected/profile", (req, res) => {
+  const authorization = req.headers.authorization;
+
+  if (!authorization || !authorization.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Access token required" });
+  }
+
+  res.json({
+    message: "You reached a protected endpoint!",
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.status(200).json({
     status: "ok",
