@@ -172,15 +172,27 @@ app.get("/public/info", (_req, res) => {
   res.status(200).json({ message: "Welcome stranger! This info is public." });
 });
 
-app.get("/protected/profile", (req, res) => {
+app.get("/protected/profile", async (req, res) => {
   const authorization = req.headers.authorization;
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Access token required" });
   }
 
-  res.json({
-    message: "You reached a protected endpoint!",
+  const token = authorization.substring(7);
+
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data.user) {
+    return res.status(401).json({
+      error: "Invalid or expired token",
+    });
+  }
+
+  return res.json({
+    id: data.user.id,
+    email: data.user.email,
+    createdAt: data.user.created_at,
   });
 });
 
