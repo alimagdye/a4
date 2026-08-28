@@ -163,8 +163,8 @@ app.post("/auth/login", async (req, res) => {
   }
 
   return res.status(200).json({
-    access_token: data.session?.access_token,
-    refresh_token: data.session?.refresh_token,
+    accessToken: data.session?.access_token,
+    refreshToken: data.session?.refresh_token,
     user: data.user,
   });
 });
