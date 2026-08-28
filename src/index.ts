@@ -10,6 +10,7 @@ import {
   deleteTask,
 } from "./repositories/taskRepository.js";
 import Task from "./types/task.js";
+import supabase from "./supabase.js";
 
 const app = express();
 
@@ -103,6 +104,68 @@ app.delete("/tasks/:id", async (req, res) => {
   }
 
   res.sendStatus(204);
+});
+
+app.post("/auth/signup", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (
+    typeof email !== "string" ||
+    email.trim() === "" ||
+    typeof password !== "string" ||
+    password.trim() === ""
+  ) {
+    return res.status(400).json({
+      error: "Email and password are required",
+    });
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (error) {
+    return res.status(400).json({
+      error: error.message,
+    });
+  }
+
+  return res.status(201).json({
+    user: data.user,
+  });
+});
+
+app.post("/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (
+    typeof email !== "string" ||
+    email.trim() === "" ||
+    typeof password !== "string" ||
+    password.trim() === ""
+  ) {
+    return res.status(400).json({
+      error: "Email and password are required",
+    });
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return res.status(401).json({
+      error: "Invalid email or password",
+    });
+  }
+
+  return res.status(200).json({
+    access_token: data.session?.access_token,
+    refresh_token: data.session?.refresh_token,
+    user: data.user,
+  });
 });
 
 app.get("/health", (_req, res) => {
