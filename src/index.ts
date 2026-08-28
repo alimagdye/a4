@@ -11,6 +11,7 @@ import {
 } from "./repositories/taskRepository.js";
 import Task from "./types/task.js";
 import supabase from "./supabase.js";
+import { requireAuth } from "./middlewares/requireAuth.js";
 
 const app = express();
 
@@ -168,31 +169,33 @@ app.post("/auth/login", async (req, res) => {
   });
 });
 
+app.post("/auth/logout", requireAuth, async (_req, res) => {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    return res.status(400).json({
+      error: error.message,
+    });
+  }
+
+  return res.status(204).send();
+});
+
 app.get("/public/info", (_req, res) => {
   res.status(200).json({ message: "Welcome stranger! This info is public." });
 });
 
-app.get("/protected/profile", async (req, res) => {
-  const authorization = req.headers.authorization;
-
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Access token required" });
-  }
-
-  const token = authorization.substring(7);
-
-  const { data, error } = await supabase.auth.getUser(token);
-
-  if (error || !data.user) {
-    return res.status(401).json({
-      error: "Invalid or expired token",
-    });
-  }
-
+app.get("/protected/profile", requireAuth, async (req, res) => {
   return res.json({
-    id: data.user.id,
-    email: data.user.email,
-    createdAt: data.user.created_at,
+    id: req.user!.id,
+    email: req.user!.email,
+    createdAt: req.user!.created_at,
+  });
+});
+
+app.get("/protected/dashboard", requireAuth, (req, res) => {
+  res.json({
+    message: `Welcome to your dashboard, ${req.user!.email}`,
   });
 });
 
